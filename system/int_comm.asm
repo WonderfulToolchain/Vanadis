@@ -19,5 +19,51 @@
 ; SOFTWARE.
 
 int_comm:
+    cmp ah, 0x00
+    je int_comm_open
+
+    cmp ah, 0x01
+    je int_comm_close
+
+    cmp ah, 0x09
+    je int_comm_set_baudrate
+
+    cmp ah, 0x0A
+    je int_comm_get_baudrate
+
     push 0x14
     jmp exc_dump
+
+int_comm_open:
+    push ax
+    in al, IO_SERIAL_STATUS
+    or al, SERIAL_ENABLE | SERIAL_OVERRUN_RESET
+    out IO_SERIAL_STATUS, al
+    pop ax
+    iret
+
+int_comm_close:
+    push ax
+    in al, IO_SERIAL_STATUS
+    and al, ~SERIAL_ENABLE
+    out IO_SERIAL_STATUS, al
+    pop ax
+    iret
+
+int_comm_set_baudrate:
+    push ax
+    mov ah, bl
+    shl ah, 6
+    in al, IO_SERIAL_STATUS
+    and al, ~SERIAL_BAUD_38400
+    or al, ah
+    out IO_SERIAL_STATUS, al
+    pop ax
+    iret
+
+int_comm_get_baudrate:
+    xor ah, ah
+    in al, IO_SERIAL_STATUS
+    shr al, 6
+    and al, 0x01
+    iret
